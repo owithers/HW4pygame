@@ -3,4 +3,4 @@ possible ideas:
 pong
 space invaders 
 
-pygame pygame
+pygame 

@@ -83,9 +83,9 @@ class Star(pygame.sprite.Sprite):
             self.rect.center = (x, y + self.velocity)
 
 
-class BulletSprite(pygame.sprite.Sprite):
+class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        super(BulletSprite, self).__init__()
+        super(Bullet, self).__init__()
         self.image = pygame.Surface((10, 10))
         for i in range(5, 0, -1):
             color = 255.0 * float(i)/5
@@ -105,9 +105,9 @@ class BulletSprite(pygame.sprite.Sprite):
             self.kill()
 
 
-class EnemySprite(pygame.sprite.Sprite):
+class Alien(pygame.sprite.Sprite):
     def __init__(self, x_pos, groups):
-        super(EnemySprite, self).__init__()
+        super(Alien, self).__init__()
         self.image = pygame.image.load("alien.bmp").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.center = (x_pos, 0)
@@ -134,7 +134,7 @@ class EnemySprite(pygame.sprite.Sprite):
         if pygame.mixer.get_init():
             self.explosion_sound.play(maxtime=1000)
             Explosion(x, y)
-        super(EnemySprite, self).kill()
+        super(Alien, self).kill()
 
 
 class StatusSprite(pygame.sprite.Sprite):
@@ -157,9 +157,9 @@ class StatusSprite(pygame.sprite.Sprite):
         self.image.blit(score, (0, 0))
 
 
-class ShipSprite(pygame.sprite.Sprite):
+class Cat(pygame.sprite.Sprite):
     def __init__(self, groups, weapon_groups):
-        super(ShipSprite, self).__init__()
+        super(Cat, self).__init__()
         self.image = pygame.image.load("cat.bmp").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.center = (X_MAX/2, Y_MAX - 40)
@@ -183,9 +183,9 @@ class ShipSprite(pygame.sprite.Sprite):
             # Handle movement
             self.rect.center = x + self.dx, y + self.dy
 
-            # Handle firing
+            #Handle firing 
             if self.firing:
-                self.shot = BulletSprite(x, y)
+                self.shot = Bullet(x, y)
                 self.shot.add(self.groups)
 
             if self.health < 0:
@@ -254,17 +254,17 @@ def main():
 
     stars = create_starfield(everything)
 
-    ship = ShipSprite(everything, weapon_fire)
-    ship.add(everything)
+    cat1 = Cat(everything, weapon_fire)
+    cat1.add(everything)
 
-    status = StatusSprite(ship, everything)
+    status = StatusSprite(cat1, everything)
 
     deadtimer = 30
     credits_timer = 250
 
     for i in range(10):
         pos = random.randint(0, X_MAX)
-        EnemySprite(pos, [everything, enemies])
+        Alien(pos, [everything, enemies])
 
     # # Get some music
     # if pygame.mixer.get_init():
@@ -282,65 +282,65 @@ def main():
             if not game_over:
                 if event.type == KEYDOWN:
                     if event.key == K_DOWN:
-                        ship.steer(DOWN, START)
+                        cat1.steer(DOWN, START)
                     if event.key == K_LEFT:
-                        ship.steer(LEFT, START)
+                        cat1.steer(LEFT, START)
                     if event.key == K_RIGHT:
-                        ship.steer(RIGHT, START)
+                        cat1.steer(RIGHT, START)
                     if event.key == K_UP:
-                        ship.steer(UP, START)
+                        cat1.steer(UP, START)
                     if event.key == K_LCTRL:
-                        ship.shoot(START)
+                        cat1.shoot(START)
                     if event.key == K_RETURN:
-                        if ship.mega:
-                            ship.mega -= 1
+                        if cat1.mega:
+                            cat1.mega -= 1
                             for i in enemies:
                                 i.kill()
 
                 if event.type == KEYUP:
                     if event.key == K_DOWN:
-                        ship.steer(DOWN, STOP)
+                        cat1.steer(DOWN, STOP)
                     if event.key == K_LEFT:
-                        ship.steer(LEFT, STOP)
+                        cat1.steer(LEFT, STOP)
                     if event.key == K_RIGHT:
-                        ship.steer(RIGHT, STOP)
+                        cat1.steer(RIGHT, STOP)
                     if event.key == K_UP:
-                        ship.steer(UP, STOP)
+                        cat1.steer(UP, STOP)
                     if event.key == K_LCTRL:
-                        ship.shoot(STOP)
+                        cat1.shoot(STOP)
 
         # Check for impact
-        hit_ships = pygame.sprite.spritecollide(ship, enemies, True)
-        for i in hit_ships:
-            ship.health -= 15
+        hit_cat = pygame.sprite.spritecollide(cat1, enemies, True)
+        for i in hit_cat:
+            cat1.health -= 15
 
-        if ship.health < 0:
+        if cat1.health < 0:
             if deadtimer:
                 deadtimer -= 1
             else:
                 sys.exit()
 
         # Check for successful attacks
-        hit_ships = pygame.sprite.groupcollide(
+        hit_cat = pygame.sprite.groupcollide(
             enemies, weapon_fire, True, True)
-        for k, v in hit_ships.items():
+        for k, v in hit_cat.items():
             k.kill()
             for i in v:
                 i.kill()
-                ship.score += 10
+                cat1.score += 10
 
         if len(enemies) < 20 and not game_over:
             pos = random.randint(0, X_MAX)
-            EnemySprite(pos, [everything, enemies])
+            Alien(pos, [everything, enemies])
 
         # Check for game over
-        if ship.score > 1000:
+        if cat1.score > 1000:
             game_over = True
             for i in enemies:
                 i.kill()
 
-            ship.autopilot = True
-            ship.shoot(STOP)
+            cat1.autopilot = True
+            cat1.shoot(STOP)
 
         if game_over:
             #pygame.mixer.music.fadeout(8000)

@@ -3,7 +3,7 @@ import sys
 
 import pygame
 from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, \
-    K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL, K_RETURN, FULLSCREEN
+    K_LEFT, K_UP, K_RIGHT, KEYUP, K_SPACE, K_RETURN, FULLSCREEN
 
 X_MAX = 800
 Y_MAX = 600
@@ -66,7 +66,7 @@ class Star(pygame.sprite.Sprite):
             if self.colour <= 20:
                 self.colour = random.randrange(20)
 
-        pygame.draw.line(self.image, (self.colour, self.colour, self.colour),
+        pygame.draw.line(self.image, (self.color, self.color, self.color),
                          (0, 0), (0, self.size))
 
         if self.velocity < Y_MAX / 3:
@@ -83,17 +83,17 @@ class Star(pygame.sprite.Sprite):
             self.rect.center = (x, y + self.velocity)
 
 
-class Bullet(pygame.sprite.Sprite):
+class Laser(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        super(Bullet, self).__init__()
+        super(Laser, self).__init__()
         self.image = pygame.Surface((10, 10))
-        for i in range(5, 0, -1):
+        for i in range(4, 0, -1):
             color = 255.0 * float(i)/5
-            pygame.draw.circle(self.image,
-                               (0, 0, color),
-                               (5, 5),
-                               i,
-                               0)
+            pygame.draw.circle(self.image, 
+                                (0, 0, color),
+                                (3, 3),
+                                i,
+                                0)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y-25)
 
@@ -115,8 +115,8 @@ class Alien(pygame.sprite.Sprite):
         self.velocity = random.randint(3, 10)
 
         self.add(groups)
-        self.explosion_sound = pygame.mixer.Sound("laser.wav")
-        self.explosion_sound.set_volume(0.4)
+        self.laser_sound = pygame.mixer.Sound("laser.wav")
+        self.laser_sound.set_volume(0.4)
 
     def update(self):
         x, y = self.rect.center
@@ -132,7 +132,7 @@ class Alien(pygame.sprite.Sprite):
     def kill(self):
         x, y = self.rect.center
         if pygame.mixer.get_init():
-            self.explosion_sound.play(maxtime=1000)
+            self.laser_sound.play(maxtime=1000)
             Explosion(x, y)
         super(Alien, self).kill()
 
@@ -185,7 +185,7 @@ class Cat(pygame.sprite.Sprite):
 
             #Handle firing 
             if self.firing:
-                self.shot = Bullet(x, y)
+                self.shot = Laser(x, y)
                 self.shot.add(self.groups)
 
             if self.health < 0:
@@ -266,11 +266,6 @@ def main():
         pos = random.randint(0, X_MAX)
         Alien(pos, [everything, enemies])
 
-    # # Get some music
-    # if pygame.mixer.get_init():
-    #     pygame.mixer.music.load("DST-AngryMod.mp3")
-    #     pygame.mixer.music.set_volume(0.8)
-    #     pygame.mixer.music.play(-1)
 
     while True:
         clock.tick(30)
@@ -289,7 +284,7 @@ def main():
                         cat1.steer(RIGHT, START)
                     if event.key == K_UP:
                         cat1.steer(UP, START)
-                    if event.key == K_LCTRL:
+                    if event.key == K_SPACE:
                         cat1.shoot(START)
                     if event.key == K_RETURN:
                         if cat1.mega:
@@ -306,7 +301,7 @@ def main():
                         cat1.steer(RIGHT, STOP)
                     if event.key == K_UP:
                         cat1.steer(UP, STOP)
-                    if event.key == K_LCTRL:
+                    if event.key == K_SPACE:
                         cat1.shoot(STOP)
 
         # Check for impact
@@ -343,13 +338,8 @@ def main():
             cat1.shoot(STOP)
 
         if game_over:
-            #pygame.mixer.music.fadeout(8000)
-            for i in stars:
-                i.accelerate()
-            if credits_timer:
-                credits_timer -= 1
-            else:
-                sys.exit()
+            sys.exit()
+        
 
         # Update sprites
         everything.clear(screen, empty)

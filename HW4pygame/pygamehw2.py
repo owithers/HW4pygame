@@ -9,6 +9,9 @@ blue = (0, 0, 255)
 # Size of break-out blocks
 block_width = 23
 block_height = 15
+
+#gameOverSound = pygame.mixer.Sound('gameover.wav')
+#pygame.mixer.music.load('background.mid')
  
  
 class Block(pygame.sprite.Sprite):
@@ -25,6 +28,7 @@ class Block(pygame.sprite.Sprite):
         # Create the image of the block of appropriate size
         # The width and height are sent as a list for the first parameter.
         self.image = pygame.Surface([block_width, block_height])
+        
  
         # Fill the image with the appropriate color
         self.image.fill(color)
@@ -62,6 +66,7 @@ class Ball(pygame.sprite.Sprite):
  
         # Create the image of the ball
         self.image = pygame.Surface([self.width, self.height])
+        
  
         # Color the ball
         self.image.fill(white)
@@ -155,7 +160,7 @@ pygame.init()
 screen = pygame.display.set_mode([800, 600])
  
 # Set the title of the window
-pygame.display.set_caption('Breakout')
+pygame.display.set_caption('Brick Breaker')
  
 # Enable this to make the mouse disappear when over our window
 pygame.mouse.set_visible(0)
@@ -231,6 +236,7 @@ while not exit_program:
  
     # If we are done, print game over
     if game_over:
+        gameOverSound = pygame.mixer.music.load('gameover.wav')
         text = font.render("Game Over", True, white)
         textpos = text.get_rect(centerx=background.get_width()/2)
         textpos.top = 300

@@ -1,100 +1,91 @@
-import random
-import sys
-
 import pygame
-from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, \
-    K_LEFT, K_UP, K_RIGHT, KEYUP, K_SPACE, K_RETURN, FULLSCREEN
+import random
 
-X_MAX = 800
-Y_MAX = 600
-size = (X_MAX, Y_MAX)
+width = 800
+height = 600
+size = (width, height)
 
-LEFT, RIGHT, UP, DOWN = 0, 1, 3, 4
-START, STOP = 0, 1
+black = (0,0,0)
+white = (255, 255, 255)
 
-everything = pygame.sprite.Group()
+pygame.init()
+pygame.mixer.init() 
 screen = pygame.display.set_mode(size)
+pygame.display.set_caption("Emoji Fight")
 
-class Explosion(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super(Explosion, self).__init__()
-        sheet = pygame.image.load("x.bmp")
-        self.images = []
-        for i in range(0, 768, 48):
-            rect = pygame.Rect((i, 0, 48, 48))
-            image = pygame.Surface(rect.size)
-            image.blit(sheet, (0, 0), rect)
-            self.images.append(image)
+shooting_sound = pygame.mixer.Sound("laser.wav")
+gameover = pygame.mixer.Sound("gameover.wav")
+explosion = pygame.mixer.Sound("explosion.wav")
+pygame.mixer.music.set_volume(1) 
 
-        self.image = self.images[0]
-        self.index = 0
+font_name = pygame.font.match_font('Arial')
+
+
+class Cat(pygame.sprite.Sprite):
+    def __init__(self): 
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("cat.bmp").convert_alpha()
         self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.add(everything)
+        self.radius = 30 
+        self.rect.centerx = width/2
+        self.rect.bottom = height-10 
+        self.shooting_wait = 250
+        self.last_shot = pygame.time.get_ticks() 
 
     def update(self):
-        self.image = self.images[self.index]
-        self.index += 1
-        if self.index >= len(self.images):
-            self.kill()
+        self.speedx = 0
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.speedx = -5 #change to speed up
+        if keys[pygame.K_RIGHT]:
+            self.speedx = 5 #change to speed up
+        if keys[pygame.K_SPACE]:
+            self.shoot()
+        self.rect.x += self.speedx
+        if self.rect.right > width: #creating a wall so that our right coord. does not get bigger than width
+            self.rect.right = width
+        if self.rect.left < 0: #coordinate-based screen
+            self.rect.left = 0 #constraining player movement to screen
 
+    def shoot(self):
+        current = pygame.time.get_ticks()
+        if current - self.last_shot > self.shooting_wait: #speeding up shooting delay time
+            self.last_shot = current
+            laser = Laser(self.rect.centerx, self.rect.top) #bottom of bullet at top of the player
+            all_sprites.add(laser) #add to group
+            lasers.add(laser)
+            shooting_sound.play() #adding sound to shoot
+            shooting_sound.set_volume(.6) #adjusting sound to play at 60% full volume
 
-class Star(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super(Star, self).__init__()
-        self.image = pygame.Surface((2, 2))
-        pygame.draw.circle(self.image,
-                           (128, 128, 200),
-                           (0, 0),
-                           2,
-                           0)
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.velocity = 1
-        self.size = 1
-        self.colour = 128
-
-    def accelerate(self):
-        self.image = pygame.Surface((1, self.size))
-
-        if self.size < 200:
-            self.size += 4
-            self.color += 20
-            if self.color >= 200:
-                self.color = random.randint(180, 200)
-        else:
-            self.color -= 30
-            if self.color <= 20:
-                self.color = random.randrange(20)
-
-        pygame.draw.line(self.image, (self.color, self.color, self.color),
-                         (0, 0), (0, self.size))
-
-        if self.velocity < Y_MAX / 3:
-            self.velocity += 1
-
-        # x, y = self.rect.center
-        # self.rect.center = random.randrange(X_MAX), y
+class Alien(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = self.image = pygame.image.load("alien.bmp").convert_alpha()
+        self.rect = self.image.get_rect() 
+        self.radius = int(self.rect.width*.9/2)
+        self.rect.x = random.randrange(0, width - self.rect.width) #will alwas appear between left and right
+        self.rect.y = random.randrange(-100, -40)
+        self.speedy = random.randrange(1, 10) #random assignment of speed
+  
 
     def update(self):
-        x, y = self.rect.center
-        if self.rect.center[1] > Y_MAX:
-            self.rect.center = (x, 0)
-        else:
-            self.rect.center = (x, y + self.velocity)
-
+        self.rect.y += self.speedy 
+        if self.rect.top > height + 10:
+            self.rect.x = random.randrange(0, width - self.rect.width) #will alwas appear between left and right
+            self.rect.y = random.randrange(-100, -40)
+            self.speedy = random.randrange(1, 10)
 
 class Laser(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super(Laser, self).__init__()
         self.image = pygame.Surface((10, 10))
-        for i in range(4, 0, -1):
+        for i in range(5, 0, -1):
             color = 255.0 * float(i)/5
-            pygame.draw.circle(self.image, 
-                                (0, 0, color),
-                                (3, 3),
-                                i,
-                                0)
+            pygame.draw.circle(self.image,
+                               (0, 0, color),
+                               (5, 5),
+                               i,
+                               0)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y-25)
 
@@ -105,249 +96,76 @@ class Laser(pygame.sprite.Sprite):
         if y <= 0:
             self.kill()
 
+def text(surf, text, size, x, y):
+    font = pygame.font.Font(font_name, size) #created font object
+    text_on = font.render(text, True, white) #surface for writing for pixels, True is set so we can use an anti-aliased font which is cleaner (adds grey pixels)
+    text_rect = text_on.get_rect() #surface for rect
+    text_rect.midtop = (x, y) #positioning score and lives as found from python documentation
+    surf.blit(text_on, text_rect) 
 
-class Alien(pygame.sprite.Sprite):
-    def __init__(self, x_pos, groups):
-        super(Alien, self).__init__()
-        self.image = pygame.image.load("alien.bmp").convert_alpha()
-        self.rect = self.image.get_rect()
-        self.rect.center = (x_pos, 0)
+all_sprites = pygame.sprite.Group()
+aliens = pygame.sprite.Group()
+lasers = pygame.sprite.Group()
+player = Cat()
+all_sprites.add(player) #add any sprite we create so it gets animated and drawn
+for i in range(10):
+    a = Alien() #make a mob
+    all_sprites.add(a) #add it to the new groups
+    aliens.add(a)
 
-        self.velocity = random.randint(3, 10)
-
-        self.add(groups)
-        self.laser_sound = pygame.mixer.Sound("laser.wav")
-        self.laser_sound.set_volume(0.4)
-
-    def update(self):
-        x, y = self.rect.center
-
-        if y > Y_MAX:
-            x, y = random.randint(0, X_MAX), 0
-            self.velocity = random.randint(3, 10)
-        else:
-            x, y = x, y + self.velocity
-
-        self.rect.center = x, y
-
-    def kill(self):
-        x, y = self.rect.center
-        if pygame.mixer.get_init():
-            self.laser_sound.play(maxtime=1000)
-            Explosion(x, y)
-        super(Alien, self).kill()
+score = 0
+lives = 5
 
 
-class StatusSprite(pygame.sprite.Sprite):
-    def __init__(self, ship, groups):
-        super(StatusSprite, self).__init__()
-        self.image = pygame.Surface((X_MAX, 30))
-        self.rect = self.image.get_rect()
-        self.rect.bottomleft = 0, Y_MAX
+#game loop
+runs = True
+while runs:
+    #clock.tick(FPS) #process input, handle updates, draw on the screen should meet FPS
+    #process input
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            runs = False #game loop ends
 
-        default_font = pygame.font.get_default_font()
-        self.font = pygame.font.Font(default_font, 20)
+    #handle updates
+    all_sprites.update()
 
-        self.ship = ship
-        self.add(groups)
+    #check to see if laser hits a fruit
+    hits = pygame.sprite.groupcollide(aliens, lasers, True, True) #if a bullet hits a fruit, both will be deleted
+    for hit in hits:
+        score = score + 10 
+        a = Alien() #create new fruits
+        all_sprites.add(a)
+        aliens.add(a) #always have 10 fruits because they will be created at the rate they are deleted
+        #player.lives -= 1
 
-    def update(self):
-        score = self.font.render("Health : {} Score : {}".format(
-            self.ship.health, self.ship.score), True, (150, 50, 50))
-        self.image.fill((0, 0, 0))
-        self.image.blit(score, (0, 0))
+    
+    hits = pygame.sprite.spritecollide(player, aliens, True, pygame.sprite.collide_circle) #mobs are now removed when they hit the player
+    if hits:
+        explosion.play()
+        explosion.set_volume(.7)
+        lives -= 1
+        if not lives:
+            gameover.play(0) #sound added when laser hits fruit target
+            gameover.set_volume(.7) #adjusting collision sound
+            runs = False
 
+    
+    screen.fill(black)
+    all_sprites.draw(screen)
+    text(screen, "Score: " + str(score), 36, width/2, 10)
+    text(screen, "Lives: " + str(lives), 36, width/12, 10) 
+    pygame.display.flip() 
 
-class Cat(pygame.sprite.Sprite):
-    def __init__(self, groups, weapon_groups):
-        super(Cat, self).__init__()
-        self.image = pygame.image.load("cat.bmp").convert_alpha()
-        self.rect = self.image.get_rect()
-        self.rect.center = (X_MAX/2, Y_MAX - 40)
-        self.dx = self.dy = 0
-        self.firing = self.shot = False
-        self.health = 100
-        self.score = 0
-
-        self.groups = [groups, weapon_groups]
-
-        self.mega = 1
-
-        self.autopilot = False
-        self.in_position = False
-        self.velocity = 2
-
-    def update(self):
-        x, y = self.rect.center
-
-        if not self.autopilot:
-            # Handle movement
-            self.rect.center = x + self.dx, y + self.dy
-
-            #Handle firing 
-            if self.firing:
-                self.shot = Laser(x, y)
-                self.shot.add(self.groups)
-
-            if self.health < 0:
-                self.kill()
-        else:
-            if not self.in_position:
-                if x != X_MAX/2:
-                    x += (abs(X_MAX/2 - x)/(X_MAX/2 - x)) * 2
-                if y != Y_MAX - 100:
-                    y += (abs(Y_MAX - 100 - y)/(Y_MAX - 100 - y)) * 2
-
-                if x == X_MAX/2 and y == Y_MAX - 100:
-                    self.in_position = True
-            else:
-                y -= self.velocity
-                self.velocity *= 1.5
-                if y <= 0:
-                    y = -30
-            self.rect.center = x, y
-
-    def steer(self, direction, operation):
-        v = 10
-        if operation == START:
-            if direction in (UP, DOWN):
-                self.dy = {UP: -v,
-                           DOWN: v}[direction]
-
-            if direction in (LEFT, RIGHT):
-                self.dx = {LEFT: -v,
-                           RIGHT: v}[direction]
-
-        if operation == STOP:
-            if direction in (UP, DOWN):
-                self.dy = 0
-            if direction in (LEFT, RIGHT):
-                self.dx = 0
-
-    def shoot(self, operation):
-        if operation == START:
-            self.firing = True
-        if operation == STOP:
-            self.firing = False
-
-
-def create_starfield(group):
-    stars = []
-    for i in range(100):
-        x, y = random.randrange(X_MAX), random.randrange(Y_MAX)
-        s = Star(x, y)
-        s.add(group)
-        stars.append(s)
-    return stars
-
-
-def main():
-    game_over = False
-
-    pygame.font.init()
-    pygame.mixer.init()
-    screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
-    enemies = pygame.sprite.Group()
-    weapon_fire = pygame.sprite.Group()
-
-    empty = pygame.Surface((X_MAX, Y_MAX))
-    clock = pygame.time.Clock()
-
-    stars = create_starfield(everything)
-
-    cat1 = Cat(everything, weapon_fire)
-    cat1.add(everything)
-
-    status = StatusSprite(cat1, everything)
-
-    deadtimer = 30
-    credits_timer = 250
-
-    for i in range(10):
-        pos = random.randint(0, X_MAX)
-        Alien(pos, [everything, enemies])
-
-
-    while True:
-        clock.tick(30)
-        # Check for input
-        for event in pygame.event.get():
-            if event.type == QUIT or (
-                    event.type == KEYDOWN and event.key == K_ESCAPE):
-                sys.exit()
-            if not game_over:
-                if event.type == KEYDOWN:
-                    if event.key == K_DOWN:
-                        cat1.steer(DOWN, START)
-                    if event.key == K_LEFT:
-                        cat1.steer(LEFT, START)
-                    if event.key == K_RIGHT:
-                        cat1.steer(RIGHT, START)
-                    if event.key == K_UP:
-                        cat1.steer(UP, START)
-                    if event.key == K_SPACE:
-                        cat1.shoot(START)
-                    if event.key == K_RETURN:
-                        if cat1.mega:
-                            cat1.mega -= 1
-                            for i in enemies:
-                                i.kill()
-
-                if event.type == KEYUP:
-                    if event.key == K_DOWN:
-                        cat1.steer(DOWN, STOP)
-                    if event.key == K_LEFT:
-                        cat1.steer(LEFT, STOP)
-                    if event.key == K_RIGHT:
-                        cat1.steer(RIGHT, STOP)
-                    if event.key == K_UP:
-                        cat1.steer(UP, STOP)
-                    if event.key == K_SPACE:
-                        cat1.shoot(STOP)
-
-        # Check for impact
-        hit_cat = pygame.sprite.spritecollide(cat1, enemies, True)
-        for i in hit_cat:
-            cat1.health -= 15
-
-        if cat1.health < 0:
-            if deadtimer:
-                deadtimer -= 1
-            else:
-                sys.exit()
-
-        # Check for successful attacks
-        hit_cat = pygame.sprite.groupcollide(
-            enemies, weapon_fire, True, True)
-        for k, v in hit_cat.items():
-            k.kill()
-            for i in v:
-                i.kill()
-                cat1.score += 10
-
-        if len(enemies) < 20 and not game_over:
-            pos = random.randint(0, X_MAX)
-            Alien(pos, [everything, enemies])
-
-        # Check for game over
-        if cat1.score > 1000:
-            game_over = True
-            for i in enemies:
-                i.kill()
-
-            cat1.autopilot = True
-            cat1.shoot(STOP)
-
-        if game_over:
-            sys.exit()
-        
-
-        # Update sprites
-        everything.clear(screen, empty)
-        everything.update()
-        everything.draw(screen)
+while not runs:
+    all_sprites = pygame.sprite.Group()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+        screen.fill(black)
+        all_sprites.draw(screen)
+        text(screen, "Game Over :/ ", 36, width/2, height/2)
         pygame.display.flip()
 
+pygame.quit()
 
-if __name__ == '__main__':
-    main()
+

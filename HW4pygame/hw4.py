@@ -7,12 +7,13 @@ from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, \
 
 X_MAX = 800
 Y_MAX = 600
+size = (X_MAX, Y_MAX)
 
 LEFT, RIGHT, UP, DOWN = 0, 1, 3, 4
 START, STOP = 0, 1
 
 everything = pygame.sprite.Group()
-
+screen = pygame.display.set_mode(size)
 
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -58,13 +59,13 @@ class Star(pygame.sprite.Sprite):
 
         if self.size < 200:
             self.size += 4
-            self.colour += 20
-            if self.colour >= 200:
-                self.colour = random.randint(180, 200)
+            self.color += 20
+            if self.color >= 200:
+                self.color = random.randint(180, 200)
         else:
-            self.colour -= 30
-            if self.colour <= 20:
-                self.colour = random.randrange(20)
+            self.color -= 30
+            if self.color <= 20:
+                self.color = random.randrange(20)
 
         pygame.draw.line(self.image, (self.color, self.color, self.color),
                          (0, 0), (0, self.size))

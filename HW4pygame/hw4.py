@@ -52,10 +52,10 @@ class Cat(pygame.sprite.Sprite):
         if current - self.last_shot > self.shooting_wait: #speeding up shooting delay time
             self.last_shot = current
             laser = Laser(self.rect.centerx, self.rect.top) #bottom of bullet at top of the player
-            all_sprites.add(laser) #add to group
+            everything.add(laser) #add to group
             lasers.add(laser)
-            shooting_sound.play() #adding sound to shoot
-            shooting_sound.set_volume(.6) #adjusting sound to play at 60% full volume
+            shooting_sound.play() 
+            shooting_sound.set_volume(.8) 
 
 class Alien(pygame.sprite.Sprite):
     def __init__(self):
@@ -65,7 +65,7 @@ class Alien(pygame.sprite.Sprite):
         self.radius = int(self.rect.width*.9/2)
         self.rect.x = random.randrange(0, width - self.rect.width) #will alwas appear between left and right
         self.rect.y = random.randrange(-100, -40)
-        self.speedy = random.randrange(1, 10) #random assignment of speed
+        self.speedy = random.randrange(3, 10) #random assignment of speed
   
 
     def update(self):
@@ -103,69 +103,64 @@ def text(surf, text, size, x, y):
     text_rect.midtop = (x, y) #positioning score and lives as found from python documentation
     surf.blit(text_on, text_rect) 
 
-all_sprites = pygame.sprite.Group()
+everything = pygame.sprite.Group()
 aliens = pygame.sprite.Group()
 lasers = pygame.sprite.Group()
 player = Cat()
-all_sprites.add(player) #add any sprite we create so it gets animated and drawn
-for i in range(10):
+everything.add(player) #add any sprite we create so it gets animated and drawn
+for i in range(20):
     a = Alien() #make a mob
-    all_sprites.add(a) #add it to the new groups
+    everything.add(a) #add it to the new groups
     aliens.add(a)
 
 score = 0
-lives = 5
+lives = 3
 
 
-#game loop
+
 runs = True
 while runs:
-    #clock.tick(FPS) #process input, handle updates, draw on the screen should meet FPS
-    #process input
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            runs = False #game loop ends
+            runs = False 
 
-    #handle updates
-    all_sprites.update()
+    
+    everything.update()
 
-    #check to see if laser hits a fruit
-    hits = pygame.sprite.groupcollide(aliens, lasers, True, True) #if a bullet hits a fruit, both will be deleted
+    
+    hits = pygame.sprite.groupcollide(aliens, lasers, True, True)
     for hit in hits:
         score = score + 10 
-        a = Alien() #create new fruits
-        all_sprites.add(a)
-        aliens.add(a) #always have 10 fruits because they will be created at the rate they are deleted
-        #player.lives -= 1
+        a = Alien() 
+        aliens.add(a) 
+        
 
     
     hits = pygame.sprite.spritecollide(player, aliens, True, pygame.sprite.collide_circle) #mobs are now removed when they hit the player
     if hits:
         explosion.play()
-        explosion.set_volume(.7)
+        explosion.set_volume(.8)
         lives -= 1
         if not lives:
-            gameover.play(0) #sound added when laser hits fruit target
-            gameover.set_volume(.7) #adjusting collision sound
+            gameover.play(0)
+            gameover.set_volume(.8) 
             runs = False
 
     
     screen.fill(black)
-    all_sprites.draw(screen)
-    text(screen, "Score: " + str(score), 36, width/2, 10)
-    text(screen, "Lives: " + str(lives), 36, width/12, 10) 
+    everything.draw(screen)
+    text(screen, "Lives: " + str(lives), 36, width/2, 10)
+    text(screen, "Score: " + str(score), 36, width/12, 10) 
     pygame.display.flip() 
 
 while not runs:
-    all_sprites = pygame.sprite.Group()
+    everything = pygame.sprite.Group()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
         screen.fill(black)
-        all_sprites.draw(screen)
+        everything.draw(screen)
         text(screen, "Game Over :/ ", 36, width/2, height/2)
         pygame.display.flip()
 
 pygame.quit()
-
-
